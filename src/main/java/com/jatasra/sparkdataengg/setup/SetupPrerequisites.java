@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.setup;
+package com.jatasra.sparkdataengg.setup;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;

@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter6;
+package com.jatasra.sparkdataengg.batch;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -11,11 +11,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 
-public class LongLastActionExtractorJob {
+public class DailyStockUploaderJob {
 
     public static void main(String[] args) {
 
-        System.out.println("Starting Long Last Action Extraction Job");
+        System.out.println("Starting daily stock uploader Job");
 
         //Needed for windows only. Use hadoop 3
         System.setProperty("hadoop.home.dir", "C:\\hadoop\\");
@@ -24,39 +24,42 @@ public class LongLastActionExtractorJob {
         Logger.getLogger("org").setLevel(Level.WARN );
         Logger.getLogger("akka").setLevel(Level.WARN);
 
-        //Upload for each country
-        //Set the dates correctly - as the original data was generated based on the
-        //system date on which the WebsiteVisitsDataGenerator was run
-        extractLongAction("2021-07-20", "2021-07-21");
+        //Upload for each warehouse
+        uploadStock("2021-06-01", "2021-06-03","London");
+        uploadStock("2021-06-01", "2021-06-03","LosAngeles");
+        uploadStock("2021-06-01", "2021-06-03","NewYork");
     }
 
-    private static void extractLongAction(String startDate, String endDate) {
+    private static void uploadStock(String startDate, String endDate, String warehouseId) {
 
         try {
+            //Make sure the delete the data directory before the run. Sometimes,
+            //there will be errors that the process cannot delete the data or temp directories
 
-            System.out.println("Running long last action extraction " +
-                    "for period " + startDate + " to " + endDate);
+            System.out.println("Running stock upload for " + warehouseId +
+                    " for period " + startDate + " to " + endDate);
 
             //Run a query to find the min and max IDs for the data to process
             //This is run in the driver program.
             String boundsQuery=
                     "SELECT min(ID) as MIN_ID ,max(ID) as MAX_ID " +
-                            "FROM visit_stats " +
-                            "WHERE INTERVAL_TIMESTAMP BETWEEN " +
-                            "'" +  startDate + "' AND '" + endDate + "' " ;
+                            "FROM item_stock " +
+                            "WHERE STOCK_DATE BETWEEN " +
+                            "'" +  startDate + "' AND '" + endDate + "' " +
+                            "AND WAREHOUSE_ID = '" + warehouseId + "'";
 
             //Setup DB connection
             Class.forName("org.mariadb.jdbc.Driver");
             //Connect to MariaDB
             Connection warehouseConn = DriverManager.getConnection(
-                    "jdbc:mariadb://localhost:3306/website_stats",
+                    "jdbc:mariadb://localhost:3306/warehouse_stock",
                     "spark",
                     "spark");
 
             ResultSet rsBounds =
-                    warehouseConn
-                            .createStatement()
-                            .executeQuery(boundsQuery);
+                            warehouseConn
+                                .createStatement()
+                                .executeQuery(boundsQuery);
             int minBounds=0;
             int maxBounds=0;
             while(rsBounds.next()) {
@@ -66,7 +69,6 @@ public class LongLastActionExtractorJob {
 
             System.out.println("Bounds for the Query are "
                     + minBounds + " and " + maxBounds);
-
 
             //Create the Spark Session
             SparkSession spark = SparkSession
@@ -78,25 +80,26 @@ public class LongLastActionExtractorJob {
                     .config("spark.default.parallelism", 2)
                     .config("spark.sql.streaming.forceDeleteTempCheckpointLocation", true)
                     .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version","2")
-                    .appName("LongLastActionExtractionJob")
+                    .appName("StockDailyUploaderJob")
                     .getOrCreate();
 
             spark.sparkContext().setLogLevel("ERROR");
 
-            String lastActionQuery=
-                    "SELECT ID, LAST_ACTION, DURATION " +
-                    "FROM visit_stats " +
-                    "WHERE INTERVAL_TIMESTAMP BETWEEN " +
+            String stockQuery=
+                    "SELECT ID, date_format(STOCK_DATE,'%Y-%m-%d') as STOCK_DATE," +
+                    "WAREHOUSE_ID, ITEM_NAME, OPENING_STOCK, RECEIPTS, ISSUES, UNIT_VALUE " +
+                    "FROM item_stock " +
+                    "WHERE STOCK_DATE BETWEEN " +
                     "'" +  startDate + "' AND '" + endDate + "' " +
-                    "AND duration > 15";
+                            "AND WAREHOUSE_ID = '" + warehouseId + "'";
 
-            Dataset<Row> lastActionDF
+            Dataset<Row> stockDF
                     = spark.read()
                     .format("jdbc")
                     //Using mysql since there is a bug in mariadb connector
                     //https://issues.apache.org/jira/browse/SPARK-25013
-                    .option("url", "jdbc:mysql://localhost:3306/website_stats")
-                    .option("dbtable", "( " + lastActionQuery + " ) as tmpLastAction")
+                    .option("url", "jdbc:mysql://localhost:3306/warehouse_stock")
+                    .option("dbtable", "( " + stockQuery + " ) as tmpStock")
                     .option("user", "spark")
                     .option("password", "spark")
                     .option("partitionColumn","ID")
@@ -105,17 +108,17 @@ public class LongLastActionExtractorJob {
                     .option("numPartitions",2)
                     .load();
 
-            //Write record to Kafka
-            lastActionDF.selectExpr("LAST_ACTION as key",
-                        "LAST_ACTION as value")
-                    .write()
-                    .format("kafka")
-                    .option("checkpointLocation", "/tmp/cp-lastaction")
-                    .option("kafka.bootstrap.servers", "localhost:9092")
-                    .option("topic", "spark.exercise.lastaction.long")
-                    .save();
+            //Use same logic to write to HDFS or S3, remember to include
+            //required libraries and parameters
+            //Spark works much better with shared filesystems
+            stockDF.write()
+                    .mode(SaveMode.Append)
+                    .partitionBy("STOCK_DATE","WAREHOUSE_ID")
+                    .parquet("raw_data/");
 
-            System.out.println("Last Action Count for " + startDate + " is " + lastActionDF.count());
+            System.out.println("Total size of Stock DF : " + stockDF.count());
+            stockDF.show();
+
             spark.close();
 
         } catch (Exception e) {

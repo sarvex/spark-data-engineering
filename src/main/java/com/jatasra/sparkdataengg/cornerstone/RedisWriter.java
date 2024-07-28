@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.cornerstone;
 
 import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.Row;
@@ -8,7 +8,7 @@ public class RedisWriter extends ForeachWriter<Row> {
 
 
     private static Jedis jedis = null;
-    private static final String lbKey= "country-stats";
+    private static final String lbKey= "last-action-stats";
 
     public static void setUp() {
         try{
@@ -32,11 +32,11 @@ public class RedisWriter extends ForeachWriter<Row> {
     }
     @Override public void process(Row record) {
 
-        System.out.println("Retrieved Country Record " + record.toString() );
+        System.out.println("Retrieved Last Action Record " + record.toString() );
 
-        // Update Redis SortedSet with incremental scores
+        // Update Redis SortedSet with incremental counts
         String country = record.getString(0);
-        int increment = record.getInt(1);
+        int increment = 1;
 
         jedis.zincrby(lbKey,increment,country);
 

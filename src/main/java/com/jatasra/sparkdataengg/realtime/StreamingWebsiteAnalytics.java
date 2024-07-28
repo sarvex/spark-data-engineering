@@ -1,16 +1,12 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.realtime;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.StructType;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import static org.apache.spark.sql.functions.expr;
 import static org.apache.spark.sql.types.DataTypes.*;
 
 /****************************************************************************

@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.realtime;
 
 import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.Row;

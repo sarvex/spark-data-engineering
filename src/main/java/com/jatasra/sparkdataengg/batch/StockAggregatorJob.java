@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter3;
+package com.jatasra.sparkdataengg.batch;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;

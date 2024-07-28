@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.realtime;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -6,12 +6,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.StructType;
 
 import java.util.concurrent.CountDownLatch;
-
-import static org.apache.spark.sql.types.DataTypes.IntegerType;
-import static org.apache.spark.sql.types.DataTypes.StringType;
 
 public class ShoppingCartTopicBrowser {
 

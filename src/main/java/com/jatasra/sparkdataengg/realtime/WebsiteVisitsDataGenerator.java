@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.realtime;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;

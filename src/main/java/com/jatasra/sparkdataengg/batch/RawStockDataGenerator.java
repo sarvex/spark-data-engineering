@@ -1,4 +1,4 @@
-package com.learning.sparkdataengg.chapter3;
+package com.jatasra.sparkdataengg.batch;
 
 import java.sql.Connection;
 import java.sql.Date;

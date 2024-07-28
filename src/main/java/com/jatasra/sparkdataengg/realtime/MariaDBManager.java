@@ -1,9 +1,8 @@
-package com.learning.sparkdataengg.chapter4;
+package com.jatasra.sparkdataengg.realtime;
 
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 
 /****************************************************************************
  * This Class creates and manages connections to MariaDB with an

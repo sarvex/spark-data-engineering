@@ -1,18 +1,11 @@
-package com.learning.sparkdataengg.chapter6;
+package com.jatasra.sparkdataengg.cornerstone;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.StructType;
-import scala.collection.immutable.Map;
 
-import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.from_csv;
-import static org.apache.spark.sql.types.DataTypes.IntegerType;
-import static org.apache.spark.sql.types.DataTypes.StringType;
-import scala.collection.JavaConverters.*;
 
 /****************************************************************************
  * This streaming job retrieves real time Last action where duration is
